@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- সাহায্যকারী ----------
+    // অ্যানোনিমাস লগইন করা যেকোনো ব্যবহারকারী পাবলিক তালিকা পড়তে পারবে।
+    function signedIn() { return request.auth != null; }
+    // ডকুমেন্টের মালিক: যে UID দিয়ে তৈরি হয়েছিল
+    function isOwner(res) { return signedIn() && res.data.ownerUid == request.auth.uid; }
+    // নতুন ডকুমেন্টে মালিক ঠিকমতো বসানো হয়েছে কি না
+    function ownerIsSelf() {
+      return signedIn() && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- ডোনার ----------
+    match /donors/{donorId} {
+      // সবাই পড়তে পারবে (পাবলিক তালিকা); রাস্তার ঠিকানা/কোঅর্ডিনেট
+      // অ্যাপ কখনো সার্চ রেজাল্টে দেখায় না (শুধু দূরত্ব দেখায়)।
+      allow read: if signedIn();
+      // নতুন রেজিস্ট্রেশন: সম্মতি বাধ্যতামূলক (সার্ভার-এনফোর্সড) +
+      // মালিক নিজের UID + প্রয়োজনীয় ফিল্ড থাকতে হবে
+      allow create: if ownerIsSelf()
+        && request.resource.data.voluntaryFreeConsent == true
+        && request.resource.data.name is string
+        && request.resource.data.phone is string
+        && request.resource.data.bloodGroup in ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+      // এডিট/পজ/ডিলিট: শুধু মালিক; এডিটে সম্মতি আবার লাগে না
+      allow update, delete: if isOwner(resource);
+    }
+
+    // ---------- হাসপাতাল ----------
+    match /hospitals/{hospitalId} {
+      allow read: if signedIn();
+      // "আমার সকল তথ্য সত্যি" সম্মতি + ছবি + লাইসেন্স-ফ্ল্যাগ বাধ্যতামূলক
+      allow create: if ownerIsSelf()
+        && request.resource.data.infoTrue == true
+        && request.resource.data.name is string
+        && request.resource.data.phone is string
+        && request.resource.data.photoUrl is string
+        && request.resource.data.licenceProvided == true;
+      allow update, delete: if isOwner(resource);
+
+      // লাইসেন্সের কাগজ — শুধু মালিকই দেখতে পারবে (পাবলিক নয়)
+      match /private/licence {
+        allow read, write: if signedIn()
+          && get(/databases/$(database)/documents/hospitals/$(hospitalId)).data.ownerUid == request.auth.uid;
+      }
+    }
+
+    // ---------- ডাক্তার ----------
+    match /doctors/{doctorId} {
+      allow read: if signedIn();
+      // "আমার সকল তথ্য সত্যি" সম্মতি + ছবি বাধ্যতামূলক
+      allow create: if ownerIsSelf()
+        && request.resource.data.infoTrue == true
+        && request.resource.data.name is string
+        && request.resource.data.degree is string
+        && request.resource.data.specialty is string
+        && request.resource.data.photoUrl is string;
+      allow update, delete: if isOwner(resource);
+    }
+
+    // ---------- জরুরি রক্তের অনুরোধ (v9) ----------
+    match /requests/{requestId} {
+      allow read: if signedIn();
+      // নতুন অনুরোধ: গ্রুপ/ফোন/হাসপাতাল/জেলা বাধ্যতামূলক, স্ট্যাটাস 'open'
+      allow create: if ownerIsSelf()
+        && request.resource.data.group in ['A+','A-','B+','B-','O+','O-','AB+','AB-']
+        && request.resource.data.phone is string
+        && request.resource.data.hospital is string
+        && request.resource.data.district is string
+        && request.resource.data.status == 'open';
+      // স্ট্যাটাস বদল (পূরণ হয়েছে) / এডিট / ডিলিট: শুধু মালিক
+      allow update, delete: if isOwner(resource);
+    }
+
+    // ---------- রিভিউ ----------
+    match /reviews/{reviewId} {
+      allow read: if signedIn();
+      // যেকোনো লগইন করা ব্যবহারকারী রিভিউ দিতে পারবে (১–৫ স্টার)
+      allow create: if ownerIsSelf()
+        && request.resource.data.targetType in ['hospital', 'doctor']
+        && request.resource.data.targetId is string
+        && request.resource.data.stars is int
+        && request.resource.data.stars >= 1
+        && request.resource.data.stars <= 5;
+      allow update, delete: if isOwner(resource);
+    }
+
+    // ---------- ব্লাড ব্যাংক / সংগঠন ----------
+    match /blood_orgs/{orgId} {
+      allow read: if signedIn();
+      // সংগঠনের তালিকা অ্যাপের সিড-ডেটা থেকে আসে; Firestore-এ
+      // নতুন সংগঠন যোগ করলে মালিক হতে হবে
+      allow create: if ownerIsSelf();
+      allow update, delete: if isOwner(resource);
+    }
+
+    // ---------- রিপোর্ট (UGC মডারেশন — Play নীতি) ----------
+    // যেকোনো লগইন করা ব্যবহারকারী আপত্তিকর তালিকা/রিভিউ রিপোর্ট করতে
+    // পারবে; একই তালিকায় ৩টি রিপোর্ট জমলে অ্যাপ সেটা লুকিয়ে ফেলবে।
+    match /reports/{reportId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.targetType in ['donor', 'hospital', 'doctor', 'review', 'request']
+        && request.resource.data.targetKey is string;
+      allow update, delete: if false; // রিপোর্ট মুছবে শুধু অ্যাপের মালিক (কনসোল থেকে)
+    }
+
+    // ---------- সিড-ডোনার সরানোর অনুরোধ (takedown) ----------
+    // পাবলিক তালিকার ডোনার নিজের ফোন নম্বর মিলিয়ে নিজের
+    // তালিকা সরাতে পারবে — ফোন নম্বর জানাটাই যাচাই।
+    match /takedowns/{phone} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.phone is string;
+      allow delete: if false; // একবার সরানো হলে আর ফেরত নেই
+    }
+  }
+}

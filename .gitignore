@@ -1,0 +1,18 @@
+# Dependencies & generated output
+node_modules/
+www/
+android/app/src/main/assets/public/
+android/app/build/
+android/.gradle/
+.firebase/
+
+# Build artefacts
+*.apk
+*.aab
+*.log
+
+# Secrets — never commit these
+.env
+service-account*.json
+*.keystore
+*.jks

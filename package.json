@@ -1,0 +1,17 @@
+{
+  "description": "রক্তদাতা খুঁজুন — Find blood donors, hospitals and doctors near you",
+  "devDependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
+  "name": "roktodata-khunjun",
+  "private": true,
+  "scripts": {
+    "copy:www": "node copy-to-www.js",
+    "sync": "npm run copy:www && npx cap sync android",
+    "open:android": "npx cap open android",
+    "build": "npm run copy:www"
+  },
+  "version": "1.0.0"
+}

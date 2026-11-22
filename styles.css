@@ -1,0 +1,893 @@
+/* রক্তদাতা খুঁজুন — প্রফেশনাল হাসপাতাল-মানের ডিজাইন:
+   ডিপ নেভি + মেডিক্যাল রেড + টিল-গ্রিন, গাঢ় নেভি হেডার, পরিষ্কার সাদা কার্ড */
+* { box-sizing: border-box; }
+
+:root {
+  --navy: #14213D;
+  --navy-2: #1d2f52;
+  --red: #E11D48;
+  --red-dark: #BE123C;
+  --red-grad: #F43F5E;
+  --red-soft: #FFE4E9;
+  --teal: #0B8577;
+  --teal-soft: #E6F6F3;
+  --blue: #2563EB;
+  --blue-soft: #EAEEFB;
+  --bg: #F4F5FA;
+  --card: #ffffff;
+  --text: #14213D;
+  --muted: #5B6478;
+  --border: #E6E8F0;
+  --gold: #c9a227;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ডিসপ্লে যেন এদিক-ওদিক না কাটে: পাশে স্ক্রল বন্ধ */
+html, body { overflow-x: clip; width: 100%; }
+
+#app { max-width: 640px; margin: 0 auto; padding: 0 12px 90px; }
+
+/* কপি-প্রতিরোধ: মূল কনটেন্টে টেক্সট সিলেকশন বন্ধ (ফর্মে চলে) */
+#app { -webkit-user-select: none; user-select: none; }
+input, select, textarea { -webkit-user-select: text; user-select: text; }
+
+
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px;
+  margin: 12px 0;
+  box-shadow: 0 2px 10px rgba(10, 37, 64, .07);
+  border: 1px solid var(--border);
+}
+.center { text-align: center; }
+
+h1 { margin: 0 0 4px; font-size: 26px; color: var(--navy); }
+h2 { margin: 0 0 12px; font-size: 19px; color: var(--navy); }
+h3 { margin: 0 0 10px; font-size: 16px; color: var(--navy); }
+h4 { margin: 14px 0 6px; font-size: 15px; }
+
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+label { display: block; font-weight: 600; margin: 12px 0 4px; color: var(--navy); }
+input, select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  color: var(--text);
+  background: #f8fafc;
+  font-family: inherit;
+}
+input:focus, select:focus { outline: 2px solid var(--teal); border-color: var(--teal); }
+input[type="file"] { padding: 8px; }
+input[type="checkbox"] { width: auto; accent-color: var(--red); transform: scale(1.2); }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 12px;
+  background: var(--red);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn.secondary { background: var(--teal); }
+.btn.navy { background: var(--navy); }
+.btn.big { padding: 15px; font-size: 18px; }
+.btn.small { width: auto; display: inline-block; padding: 8px 14px; font-size: 14px; margin-top: 6px; }
+.btn.link { background: none; color: var(--teal); font-weight: 600; }
+.btn:disabled { opacity: .55; cursor: default; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.or { text-align: center; color: var(--muted); margin: 10px 0 0; font-size: 13px; }
+
+/* গ্রুপ টাইল */
+.group-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 6px 0; }
+.tile {
+  border: 1.5px solid var(--border); border-radius: 12px; background: #fff;
+  padding: 10px 2px 8px; text-align: center; cursor: pointer; font-family: inherit;
+  position: relative;
+}
+.tile b { font-size: 18px; color: var(--navy); display: block; }
+.tile small { font-size: 11px; color: var(--muted); }
+.tile .dot {
+  position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%;
+  background: #cbd5e1;
+}
+.tile .dot.on { background: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
+.tile.active { border-color: var(--red); background: var(--red-soft); box-shadow: 0 0 0 1px var(--red); }
+
+.compat-mini {
+  background: var(--teal-soft); border: 1px solid #bfe8e0; border-radius: 10px;
+  padding: 10px 12px; margin: 8px 0; font-size: 14px; color: #134e4a;
+}
+
+/* দূরত্ব পিল */
+.radius-pills { display: flex; gap: 8px; margin: 6px 0; }
+.radius-pills button {
+  flex: 1; padding: 9px 0; border: 1.5px solid var(--border); border-radius: 20px;
+  background: #fff; font-weight: 700; cursor: pointer; font-family: inherit; color: var(--navy);
+}
+.radius-pills button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* লিস্টিং কার্ড */
+.listing {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px; margin: 10px 0; box-shadow: 0 1px 6px rgba(10,37,64,.05);
+  display: flex; gap: 12px;
+}
+.avatar {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar.red { background: var(--red); }
+.avatar.teal { background: var(--teal); }
+.listing-body { flex: 1; min-width: 0; }
+.listing-body h3 { margin: 0 0 2px; font-size: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.group-chip {
+  display: inline-block; background: var(--red); color: #fff; font-size: 12px;
+  font-weight: 800; padding: 2px 8px; border-radius: 12px;
+}
+.listing-body p { margin: 3px 0; font-size: 14px; color: var(--muted); }
+.listing-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.listing-actions .btn { margin-top: 0; flex: 1; min-width: 100px; padding: 10px; font-size: 15px; }
+
+.badge { padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.badge.ok { background: #dcfce7; color: #166534; }
+.badge.warn { background: #fef3c7; color: #92400e; }
+.badge.info { background: #dbeafe; color: #1e40af; }
+.badge.grey { background: #e2e8f0; color: #475569; }
+.badge.public { background: #f1f5f9; color: #475569; border: 1px solid var(--border); }
+.dist-pill { background: var(--teal-soft); color: var(--teal); }
+
+.row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eef2f6; flex-wrap: wrap; }
+.row:last-child { border-bottom: none; }
+
+/* সামঞ্জস্য চার্ট */
+.compat-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
+.compat-table th, .compat-table td { border: 1px solid var(--border); padding: 6px 2px; }
+.compat-table th { background: var(--navy); color: #fff; font-size: 12px; }
+.compat-table td.yes { background: #dcfce7; color: #166534; font-weight: 700; }
+.compat-table td.no { color: #cbd5e1; }
+
+.how { padding-left: 20px; margin: 6px 0; }
+.how li { margin: 10px 0; }
+.checklist { list-style: none; padding: 0; margin: 6px 0; }
+.checklist li { padding: 6px 0 6px 28px; position: relative; }
+.checklist li::before { content: "✓"; position: absolute; left: 4px; color: var(--teal); font-weight: 800; }
+
+.consent {
+  display: flex; gap: 10px; align-items: flex-start; background: var(--red-soft);
+  border: 1px solid #f5c2c4; border-radius: 10px; padding: 12px; margin-top: 14px;
+  font-weight: 700; color: #7f1d1d; cursor: pointer;
+}
+.consent input { margin-top: 3px; flex-shrink: 0; }
+
+.photo-preview { max-width: 160px; max-height: 160px; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border); }
+
+.stars { display: flex; gap: 4px; margin: 4px 0 8px; }
+.stars button {
+  font-size: 30px; background: none; border: none; cursor: pointer; color: #cbd5e1; padding: 0 2px;
+}
+.stars button.on { color: var(--gold); }
+
+.modal {
+  position: fixed; inset: 0; background: rgba(10, 37, 64, .6); z-index: 50;
+  display: flex; align-items: flex-start; justify-content: center; padding: 20px 12px;
+  overflow-y: auto; max-width: 100vw;
+}
+.modal-box { background: #fff; border-radius: 16px; padding: 18px; width: 100%; max-width: min(560px, calc(100vw - 24px)); min-width: 0; margin: auto 0; overflow-wrap: break-word; }
+.review-item { border-bottom: 1px solid #eef2f6; padding: 8px 0; }
+.review-item:last-child { border-bottom: none; }
+
+.warning {
+  background: #fef3c7; color: #92400e; border-radius: 12px; padding: 12px;
+  margin: 10px 0; font-weight: 600; font-size: 14px;
+}
+
+.toast {
+  position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
+  background: var(--navy); color: #fff; padding: 12px 18px; border-radius: 12px;
+  z-index: 100; max-width: 90%; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
+.toast.error { background: #991b1b; }
+
+.hidden { display: none !important; }
+.emergency { text-align: center; font-size: 13px; color: var(--red); font-weight: 600; margin: 16px 0 4px; }
+.footer { text-align: right; font-size: 10px; color: var(--muted); padding: 14px 4px 2px; opacity: .85; }
+
+.empty { text-align: center; color: var(--muted); padding: 18px 8px; }
+.empty b { color: var(--navy); }
+
+[dir="rtl"] .checklist li { padding: 6px 28px 6px 0; }
+[dir="rtl"] .checklist li::before { left: auto; right: 4px; }
+[dir="rtl"] .footer { text-align: left; }
+
+/* ---------- সুন্দর অ্যানিমেশন ---------- */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { opacity: 0; transform: scale(.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes toastUp { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.18); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.14); }
+  70% { transform: scale(1); }
+}
+@keyframes dotPulse {
+  0% { box-shadow: 0 0 0 0 rgba(22,163,74,.45); }
+  70% { box-shadow: 0 0 0 7px rgba(22,163,74,0); }
+  100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+}
+
+
+/* কার্ড ও ট্যাব প্যানেল: নিচ থেকে ভেসে ওঠা */
+.card { animation: fadeUp .4s ease both; }
+.tab-panel.active { animation: fadeUp .28s ease both; }
+
+/* তালিকার কার্ড: একটার পর একটা */
+.listing { animation: fadeUp .45s ease both; }
+.listing:nth-child(2) { animation-delay: .05s; }
+.listing:nth-child(3) { animation-delay: .1s; }
+.listing:nth-child(4) { animation-delay: .15s; }
+.listing:nth-child(5) { animation-delay: .2s; }
+.listing:nth-child(6) { animation-delay: .25s; }
+
+/* বাটন: চাপ দিলে হালকা ছোট হওয়া */
+.btn, .tile, .radius-pills button { transition: transform .12s ease, filter .15s ease, background .15s ease, box-shadow .15s ease; }
+.btn:active, .tile:active, .radius-pills button:active { transform: scale(.97); }
+
+/* গ্রুপ টাইলে "রেডি" ডট: জীবন্ত পালস */
+.tile .dot.on { animation: dotPulse 2s ease-out infinite; }
+
+/* পপআপ: পপ-ইন */
+.modal { animation: fadeIn .2s ease both; }
+.modal-box { animation: popIn .28s ease both; }
+
+/* টোস্ট: নিচ থেকে ওঠা */
+.toast { animation: toastUp .25s ease both; }
+
+/* যারা অ্যানিমেশন কম চান তাদের জন্য */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- গ্লাস বাটন ---------- */
+.btn {
+  background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,0) 55%), var(--red);
+  box-shadow: 0 8px 20px rgba(193,39,45,.32), inset 0 1px 0 rgba(255,255,255,.4), inset 0 -2px 5px rgba(0,0,0,.10);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.25);
+}
+.btn.secondary {
+  background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,0) 55%), var(--teal);
+  box-shadow: 0 8px 20px rgba(15,118,110,.32), inset 0 1px 0 rgba(255,255,255,.4), inset 0 -2px 5px rgba(0,0,0,.10);
+}
+.btn.navy {
+  background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,0) 55%), var(--navy);
+  box-shadow: 0 8px 20px rgba(10,37,64,.35), inset 0 1px 0 rgba(255,255,255,.25), inset 0 -2px 5px rgba(0,0,0,.12);
+}
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn.link { background: none; box-shadow: none; border: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.btn.link:hover { transform: none; }
+
+
+.tile, .radius-pills button {
+  background: rgba(255,255,255,.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.65);
+  box-shadow: 0 4px 12px rgba(10,37,64,.08), inset 0 1px 0 rgba(255,255,255,.7);
+}
+.tile.active {
+  background: var(--red-soft);
+  box-shadow: 0 0 0 1px var(--red), 0 4px 12px rgba(193,39,45,.18);
+}
+.radius-pills button.active {
+  background: var(--navy);
+  box-shadow: 0 6px 14px rgba(10,37,64,.28);
+}
+
+/* ---------- নিচের নেভিগেশন ---------- */
+#bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(10,37,64,.12);
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+}
+.nav-item {
+  flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 2px; border-radius: 12px; color: var(--muted);
+  font-size: 13px; font-weight: 700;
+  transition: background .15s ease, color .15s ease, transform .12s ease;
+}
+.nav-item:active { transform: scale(.96); }
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-item.active { color: var(--red); background: var(--red-soft); }
+
+/* ---------- আমার প্রোফাইল ---------- */
+.profile-head { text-align: center; padding: 6px 0 4px; }
+.profile-head .avatar { width: 84px; height: 84px; font-size: 30px; margin: 0 auto 10px; }
+.profile-head h3 { margin: 4px 0; justify-content: center; }
+.profile-head p { margin: 4px 0; color: var(--muted); font-size: 14px; }
+.group-chip.big { font-size: 16px; padding: 4px 14px; }
+.profile-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+.profile-actions .btn { margin-top: 0; }
+
+/* ---------- কার্ডের রিপোর্ট / লুকান ---------- */
+.card-tools { margin: 10px 0 0 !important; font-size: 13px; text-align: right; }
+.link-btn {
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  color: var(--muted); font-size: 13px; padding: 2px 4px; text-decoration: underline;
+}
+.link-btn:hover { color: var(--red); }
+
+/* ---------- সবকিছু খোঁজা: চিপস + ফলাফলের শিরোনাম ---------- */
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chip-row button {
+  border: 1.5px solid var(--border); border-radius: 20px; background: #fff;
+  padding: 7px 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  color: var(--navy); font-size: 14px;
+  transition: transform .12s ease, background .15s ease;
+}
+.chip-row button:active { transform: scale(.95); }
+.chip-row button:hover { background: var(--red-soft); border-color: var(--red); }
+.results-heading { margin: 18px 0 4px; font-size: 17px; }
+
+/* ---------- ফুটার লিংক + চিকিৎসা দাবিত্যাগ ---------- */
+.disclaimer { text-align: center; font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+.footer a { color: var(--teal); font-weight: 700; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* ---------- যেকোনো মোবাইলে সুন্দরভাবে ফিট ---------- */
+.listing-body p, .card, .modal-box, .review-item { overflow-wrap: break-word; }
+#bottom-nav { max-width: 640px; margin: 0 auto; }
+.compat-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+.compat-table { min-width: 380px; }
+@media (max-width: 420px) {
+  #app { padding-left: 10px; padding-right: 10px; }
+  .card { padding: 16px 14px; }
+  .tile b { font-size: 17px; }
+  .listing { padding: 12px; gap: 10px; }
+  .avatar { width: 46px; height: 46px; font-size: 16px; }
+  .profile-head .avatar { width: 76px; height: 76px; font-size: 27px; }
+}
+@media (max-width: 340px) {
+  .tile small { font-size: 10px; }
+  .btn { font-size: 16px; }
+  .listing-actions .btn { min-width: 0; }
+}
+
+/* ---------- অ্যাপয়েন্টমেন্ট মোডাল ---------- */
+.appt-head { text-align: center; margin-bottom: 8px; }
+.appt-head h3 { justify-content: center; }
+.appt-head p { margin: 4px 0; color: var(--muted); font-size: 14px; }
+.appt-number { text-align: center; font-size: 26px; font-weight: 800; color: var(--navy); letter-spacing: 1px; margin: 16px 0 10px; }
+#appt-number .btn { margin-top: 6px; }
+
+
+.card {
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(90,50,30,.06);
+}
+
+/* বাটন: আধুনিক গ্রেডিয়েন্ট + আন্ডারলাইন বন্ধ */
+.btn {
+  border-radius: 16px;
+  padding: 14px;
+  text-decoration: none;
+  background: linear-gradient(180deg, #f04438, #d92d20);
+  box-shadow: 0 10px 22px rgba(230,51,41,.30), inset 0 1px 0 rgba(255,255,255,.35);
+  border: none;
+}
+.btn.secondary {
+  background: linear-gradient(180deg, #12a37f, #0b6b52);
+  box-shadow: 0 10px 22px rgba(13,122,95,.28), inset 0 1px 0 rgba(255,255,255,.35);
+}
+.btn.navy {
+  background: linear-gradient(180deg, #1b3a54, #0d1b2a);
+  box-shadow: 0 10px 22px rgba(13,27,42,.30), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.btn.link { background: none; box-shadow: none; }
+
+/* ইনপুট: নরম ফোকাস রিং */
+input, select {
+  border-radius: 14px;
+  background: #fff;
+  border-color: #e7ddd0;
+  padding: 12px 14px;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px rgba(230,51,41,.13);
+}
+
+
+/* গ্রুপ টাইল */
+.tile { border-radius: 18px; padding: 14px 2px 10px; }
+.tile b { font-size: 20px; }
+.tile.active {
+  background: var(--red-soft);
+  border-color: var(--red);
+  box-shadow: 0 0 0 1px var(--red), 0 6px 14px rgba(230,51,41,.16);
+}
+
+/* দূরত্ব পিল */
+.radius-pills button { border-radius: 999px; padding: 10px 0; }
+.radius-pills button.active { background: var(--navy); }
+
+/* লিস্টিং কার্ড */
+.listing {
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(90,50,30,.06);
+}
+.avatar { box-shadow: 0 0 0 3px #f5ebe0; }
+.listing-body h3 { font-size: 17px; }
+.listing-actions .btn { white-space: nowrap; }
+
+/* চিপস */
+.chip-row button {
+  border-radius: 999px;
+  padding: 8px 16px;
+  box-shadow: 0 3px 10px rgba(90,50,30,.06);
+}
+.results-heading { font-size: 18px; }
+
+/* মোডাল: নরম ডিম + বড় রেডিয়াস */
+.modal { background: rgba(13,27,42,.55); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.modal-box { border-radius: 24px; padding: 22px; }
+
+/* নিচের নেভিগেশন: ভাসমান পিল */
+#bottom-nav {
+  left: 12px; right: 12px; bottom: 12px;
+  max-width: 420px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.75);
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 14px 34px rgba(13,27,42,.20);
+  padding: 8px;
+}
+.nav-item { border-radius: 18px; padding: 8px 2px; }
+.nav-item.active { background: var(--red-soft); }
+.toast { bottom: 100px; }
+
+/* ছোট স্ক্রিনে আধুনিক স্কেল */
+@media (max-width: 420px) {
+  .tile b { font-size: 18px; }
+  .card { padding: 18px 16px; }
+}
+
+html[data-text="large"] body { font-size: 18px; }
+html[data-text="large"] .listing-body p, html[data-text="large"] .card { font-size: 17px; }
+html[data-text="large"] h2 { font-size: 22px; }
+html[data-text="large"] h3 { font-size: 18px; }
+html[data-text="large"] .btn { font-size: 18px; }
+html[data-text="large"] input, html[data-text="large"] select, html[data-text="large"] label { font-size: 17px; }
+html[data-text="large"] .small { font-size: 14px; }
+html[data-text="large"] .chip-row button { font-size: 15px; }
+html[data-text="xlarge"] body { font-size: 19px; }
+html[data-text="xlarge"] .listing-body p, html[data-text="xlarge"] .card { font-size: 18px; }
+html[data-text="xlarge"] h2 { font-size: 24px; }
+html[data-text="xlarge"] h3 { font-size: 19px; }
+html[data-text="xlarge"] .btn { font-size: 19px; }
+html[data-text="xlarge"] input, html[data-text="xlarge"] select, html[data-text="xlarge"] label { font-size: 18px; }
+html[data-text="xlarge"] .small { font-size: 15px; }
+html[data-text="xlarge"] .chip-row button { font-size: 16px; }
+
+/* ---------- সেটিংস কন্ট্রোল (টেক্সট সাইজ + সুইচ) ---------- */
+.appear-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; font-weight: 700; color: var(--navy); font-size: 16px;
+}
+.switch {
+  width: 56px; height: 32px; border-radius: 999px; background: #cbd5e1;
+  border: none; cursor: pointer; position: relative; flex-shrink: 0; padding: 0;
+  transition: background .25s ease;
+}
+.switch .knob {
+  position: absolute; top: 3px; left: 3px; width: 26px; height: 26px;
+  border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  transition: transform .25s ease;
+}
+.switch.on { background: var(--red); }
+.switch.on .knob { transform: translateX(24px); }
+.seg-row { display: flex; gap: 8px; margin: 4px 0 8px; }
+.seg-row button {
+  flex: 1; padding: 10px 0; border: 1.5px solid var(--border); border-radius: 12px;
+  background: var(--card); color: var(--navy); font-weight: 700;
+  font-family: inherit; cursor: pointer; font-size: 15px;
+}
+.seg-row button.selected { background: var(--navy); color: #fff; border-color: var(--navy); }
+#textsize-row button:nth-child(1) { font-size: 14px; }
+#textsize-row button:nth-child(2) { font-size: 18px; }
+#textsize-row button:nth-child(3) { font-size: 22px; }
+
+
+/* ==================================================================
+   v9 — স্পেক ডিজাইন (ইউজারের স্ক্রিনশট অনুযায়ী):
+   প্রাইমারি লাল #E11D48, গাঢ় লাল #BE123C, নেভি #14213D,
+   টিল #0B8577, নীল #2563EB, ব্যাকগ্রাউন্ড #F4F5FA, সাদা কার্ড,
+   গ্লো শ্যাডো, ৫ ট্যাবের ভাসমান নেভিগেশন।
+   ================================================================== */
+#app { padding: 0 16px 124px; }
+
+/* ---------- বাটন: সলিড রঙ + গ্লো শ্যাডো ---------- */
+.btn {
+  background: var(--red);
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(225,29,72,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  border: none;
+}
+.btn.secondary {
+  background: var(--teal);
+  box-shadow: 0 10px 24px rgba(11,133,119,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn.navy {
+  background: var(--navy);
+  box-shadow: 0 10px 24px rgba(20,33,61,.35), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.btn.pill { border-radius: 999px; width: auto; }
+.btn.link { background: none; box-shadow: none; color: var(--teal); }
+
+/* ---------- কার্ড + ইনপুট ---------- */
+.card {
+  border-radius: 22px;
+  border: none;
+  box-shadow: 0 8px 24px rgba(20,33,61,.08);
+  padding: 20px;
+}
+input, select {
+  background: #F8F9FC;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+}
+input:focus, select:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px rgba(225,29,72,.13);
+}
+.consent { background: var(--red-soft); border-color: #FECDD3; color: #881337; }
+
+/* ---------- হোম হিরো: লাল গ্র্যাডিয়েন্ট + স্বচ্ছ বৃত্ত ---------- */
+.hero {
+  margin: 0 -16px;
+  padding: 22px 20px 78px;
+  background: linear-gradient(160deg, #F43F5E 0%, #E11D48 45%, #BE123C 100%);
+  border-radius: 0 0 36px 36px;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+}
+.hero::before, .hero::after {
+  content: ""; position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,.09); pointer-events: none;
+}
+.hero::before { width: 280px; height: 280px; top: -120px; right: -80px; }
+.hero::after { width: 190px; height: 190px; bottom: -130px; left: -70px; background: rgba(255,255,255,.06); }
+.hero-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  position: relative; z-index: 1;
+}
+.loc-btn {
+  background: none; border: none; color: #fff; text-align: left;
+  padding: 0; cursor: pointer; font-family: inherit; min-width: 0;
+}
+.loc-label { font-size: 13px; opacity: .85; display: block; }
+.loc-name {
+  font-size: 19px; font-weight: 700; display: flex; gap: 6px;
+  align-items: center; margin-top: 2px;
+}
+.loc-name svg { width: 18px; height: 18px; flex-shrink: 0; }
+.bell-btn {
+  width: 48px; height: 48px; border-radius: 16px; flex-shrink: 0;
+  background: rgba(255,255,255,.18); border: none; color: #fff;
+  cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center;
+}
+.bell-btn svg { width: 24px; height: 24px; }
+.bell-dot {
+  position: absolute; top: 10px; right: 11px; width: 9px; height: 9px;
+  border-radius: 50%; background: #fff; border: 2px solid var(--red);
+}
+.hero-title {
+  font-size: 34px; line-height: 1.25; font-weight: 800; color: #fff;
+  margin: 30px 0 0; letter-spacing: -.3px; position: relative; z-index: 1;
+}
+
+/* ---------- হোমের সার্চ কার্ড (হিরোর উপর ভেসে থাকে) ---------- */
+.search-hero-card {
+  margin-top: -52px;
+  position: relative; z-index: 2;
+  border-radius: 24px;
+}
+.search-box {
+  display: flex; align-items: center; gap: 10px;
+  background: #F4F5FA; border-radius: 14px; padding: 4px 6px 4px 14px;
+}
+.search-box > svg { width: 20px; height: 20px; color: var(--muted); flex-shrink: 0; }
+.search-box input {
+  border: none; background: transparent; padding: 12px 0; flex: 1;
+  font-size: 15px; min-width: 0;
+}
+.search-box input:focus { box-shadow: none; border: none; }
+.search-box:focus-within { box-shadow: 0 0 0 2px var(--red); }
+#btn-search-universal {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  background: var(--red); color: #fff; border: none; font-size: 19px;
+  cursor: pointer; line-height: 1;
+}
+.group-heading { font-size: 16px; margin: 18px 0 10px; }
+#btn-find-donors { margin-top: 16px; }
+
+/* ---------- গ্রুপ টাইল: গোলাপি, সিলেক্টেড = লাল + গ্লো ---------- */
+.group-tiles { gap: 10px; }
+.tile {
+  background: var(--red-soft);
+  border: none;
+  border-radius: 16px;
+  padding: 15px 2px;
+  box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.tile b { font-size: 19px; color: var(--red); }
+.tile small, .tile .dot { display: none; }
+.tile.active {
+  background: var(--red);
+  border: none;
+  box-shadow: 0 10px 20px rgba(225,29,72,.42);
+}
+.tile.active b { color: #fff; }
+.group-tiles.small .tile { padding: 11px 2px; }
+.group-tiles.small .tile b { font-size: 17px; }
+
+/* ---------- শর্টকাট কার্ড ---------- */
+.shortcuts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.shortcut {
+  background: #fff; border: none; border-radius: 20px; padding: 16px 14px;
+  display: flex; gap: 12px; align-items: center; cursor: pointer;
+  font-family: inherit; text-align: left; color: var(--text);
+  box-shadow: 0 8px 24px rgba(20,33,61,.08);
+  transition: transform .12s ease;
+}
+.shortcut:active { transform: scale(.97); }
+.shortcut-icon {
+  width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.shortcut-icon svg { width: 26px; height: 26px; }
+.shortcut-icon.teal { background: var(--teal-soft); color: var(--teal); }
+.shortcut-icon.blue { background: var(--blue-soft); color: var(--blue); }
+.shortcut-text { min-width: 0; }
+.shortcut-text b { display: block; font-size: 16px; color: var(--navy); }
+.shortcut-text small { font-size: 13px; color: var(--muted); }
+
+/* ---------- জরুরি অনুরোধ কার্ড ---------- */
+.urgent-card {
+  background: #FFF7E6; border: 1px solid #FDE9C0; border-radius: 20px;
+  padding: 16px; display: flex; gap: 12px; align-items: center; margin: 14px 0;
+  box-shadow: 0 8px 24px rgba(20,33,61,.06);
+}
+.urgent-icon {
+  width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+  background: var(--red-soft); color: var(--red);
+  display: flex; align-items: center; justify-content: center;
+}
+.urgent-icon svg { width: 28px; height: 28px; }
+.urgent-body { flex: 1; min-width: 0; }
+.urgent-body b { font-size: 16px; color: var(--navy); display: block; }
+.urgent-body p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.urgent-card .btn { width: auto; margin: 0; padding: 11px 18px; border-radius: 12px; font-size: 15px; flex-shrink: 0; }
+
+/* ---------- পেজ শিরোনাম + ফিল্টার পিল ---------- */
+.page-title { font-size: 30px; font-weight: 800; margin: 22px 0 2px; letter-spacing: -.4px; }
+
+/* প্রোফাইল শিরোনাম + ডান কোণে ভাষা বাছাই */
+.profile-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lang-corner { display: inline-flex; align-items: center; gap: 6px; margin: 22px 0 2px; padding: 6px 12px; background: #fff; border: 1.5px solid var(--border); border-radius: 999px; box-shadow: 0 2px 8px rgba(20,33,61,.06); flex: none; cursor: pointer; }
+.lang-corner select { width: auto; max-width: 140px; padding: 0; border: none; background: transparent; font-size: 14px; font-weight: 700; color: var(--navy); cursor: pointer; }
+.lang-corner select:focus { outline: none; box-shadow: none; border: none; }
+.page-sub { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+.filter-pills { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.filter-pills button {
+  border: 1.5px solid var(--border); background: #fff; border-radius: 999px;
+  padding: 9px 18px; font-weight: 700; font-size: 14px; color: var(--muted);
+  cursor: pointer; font-family: inherit; transition: transform .12s ease;
+}
+.filter-pills button:active { transform: scale(.95); }
+.filter-pills button.active {
+  background: var(--navy); color: #fff; border-color: var(--navy);
+  box-shadow: 0 8px 18px rgba(20,33,61,.25);
+}
+/* বিশেষজ্ঞতার পিল অনেক লম্বা হতে পারে — এক লাইনে স্ক্রল হবে */
+#specialty-pills { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+#specialty-pills::-webkit-scrollbar { display: none; }
+#specialty-pills button { flex-shrink: 0; }
+.search-mini { margin-top: 4px; }
+
+/* ---------- লিস্টিং কার্ড (নতুন লেআউট) ---------- */
+.listing {
+  border-radius: 22px; padding: 16px; border: none;
+  box-shadow: 0 8px 24px rgba(20,33,61,.07);
+  flex-direction: column; gap: 0;
+}
+.listing-main { display: flex; gap: 14px; width: 100%; align-items: flex-start; }
+.listing-foot {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; margin-top: 12px; width: 100%;
+}
+.listing-foot:empty { display: none; }
+.listing-foot .listing-actions { margin-top: 0; }
+.listing-foot .listing-actions .btn { flex: 0 0 auto; min-width: 0; }
+.btn svg { width: 16px; height: 16px; vertical-align: -3px; }
+.group-badge {
+  width: 62px; height: 62px; border-radius: 18px; flex-shrink: 0;
+  background: var(--red); color: #fff; font-size: 21px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 20px rgba(225,29,72,.35);
+}
+.icon-box {
+  width: 62px; height: 62px; border-radius: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.icon-box svg { width: 28px; height: 28px; }
+.icon-box.teal { background: var(--teal-soft); color: var(--teal); }
+.icon-box.blue { background: var(--blue-soft); color: var(--blue); }
+.listing-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0; }
+.dist-pill { background: var(--teal-soft); color: var(--teal); font-size: 13px; padding: 5px 11px; }
+.dist-pill.blue { background: var(--blue-soft); color: var(--blue); }
+.donor-line { display: flex; gap: 6px; align-items: center; }
+.donor-line svg { width: 15px; height: 15px; flex-shrink: 0; }
+.badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.badge-row:empty { display: none; }
+.round-btn {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; cursor: pointer; text-decoration: none; color: #fff;
+  transition: transform .12s ease;
+}
+.round-btn:active { transform: scale(.93); }
+.round-btn svg { width: 22px; height: 22px; }
+.round-btn.teal { background: var(--teal); box-shadow: 0 10px 20px rgba(11,133,119,.42); }
+.round-btn.blue { background: var(--blue); box-shadow: 0 10px 20px rgba(37,99,235,.42); }
+.round-btn.red { background: var(--red); box-shadow: 0 10px 20px rgba(225,29,72,.42); }
+.degree-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.degree-chips span {
+  background: #F4F5FA; color: var(--navy); font-size: 13px; font-weight: 700;
+  padding: 5px 12px; border-radius: 999px;
+}
+.tag-pill {
+  font-size: 13px; font-weight: 700; padding: 5px 12px;
+  border-radius: 999px; display: inline-block;
+}
+.tag-pill.pink { background: var(--red-soft); color: var(--red-dark); }
+.tag-pill.green { background: var(--teal-soft); color: var(--teal); }
+.tag-pill.blue { background: var(--blue-soft); color: var(--blue); }
+.listing .card-tools { margin: 0 !important; }
+.spec-line { font-size: 14px; color: var(--muted); }
+
+/* ---------- ম্যাপ ---------- */
+#map-wrap {
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 8px 24px rgba(20,33,61,.08); margin: 0 0 14px;
+}
+#map { height: 220px; width: 100%; background: #DCE9F5; z-index: 1; }
+.leaflet-container { font-family: inherit; font-size: 13px; }
+
+/* ---------- জরুরি অনুরোধ (মোডালের তালিকা) ---------- */
+.request-card {
+  background: #fff; border: 1px solid var(--border); border-radius: 18px;
+  padding: 14px; margin: 10px 0;
+}
+.request-card .req-head { display: flex; gap: 12px; align-items: center; }
+.request-card .group-badge { width: 48px; height: 48px; font-size: 17px; border-radius: 14px; }
+.request-card .req-body { flex: 1; min-width: 0; }
+.request-card .req-body b { color: var(--navy); font-size: 15px; display: block; }
+.request-card .req-body p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.req-phone-reveal { margin-top: 12px; text-align: center; }
+.req-phone { font-size: 22px; font-weight: 800; color: var(--navy); letter-spacing: .5px; margin: 8px 0; }
+.request-card .btn { margin-top: 10px; }
+
+/* ---------- সার্চ ফলাফলের ভিউ ---------- */
+#view-search { padding-top: 10px; }
+.back-btn { text-align: left; width: auto; padding-left: 0; margin-top: 4px; }
+
+/* ---------- নিচের নেভিগেশন: ৫ ট্যাব, active = লাল বৃত্ত ---------- */
+#bottom-nav {
+  left: 12px; right: 12px; bottom: 12px;
+  max-width: 480px;
+  border-radius: 28px;
+  border: none;
+  background: #fff;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: 0 16px 40px rgba(20,33,61,.18);
+  padding: 10px 6px;
+  gap: 0;
+}
+.nav-item { gap: 3px; padding: 4px 2px; font-size: 12px; color: #8A94A6; border-radius: 16px; }
+.nav-item.active { color: var(--red); background: none; }
+.nav-ico {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s ease, box-shadow .2s ease;
+}
+.nav-ico svg { width: 24px; height: 24px; }
+.nav-item.active .nav-ico {
+  background: var(--red);
+  box-shadow: 0 10px 20px rgba(225,29,72,.45);
+  color: #fff;
+}
+.toast { bottom: 118px; }
+
+/* ---------- ছোট স্ক্রিন ---------- */
+@media (max-width: 420px) {
+  #app { padding-left: 12px; padding-right: 12px; }
+  .hero { margin: 0 -12px; padding: 18px 16px 70px; }
+  .hero-title { font-size: 30px; }
+  .group-badge, .icon-box { width: 56px; height: 56px; }
+  .group-badge { font-size: 19px; }
+  .nav-item { font-size: 11px; }
+  .nav-ico { width: 42px; height: 42px; }
+  .nav-ico svg { width: 22px; height: 22px; }
+  .page-title { font-size: 27px; }
+}
+@media (max-width: 340px) {
+  .shortcuts { gap: 8px; }
+  .shortcut { padding: 12px 10px; gap: 8px; }
+  .shortcut-icon { width: 44px; height: 44px; border-radius: 13px; }
+  .shortcut-icon svg { width: 22px; height: 22px; }
+  .nav-ico { width: 38px; height: 38px; }
+  .nav-ico svg { width: 20px; height: 20px; }
+  .nav-item { font-size: 10px; }
+  .hero-title { font-size: 27px; }
+  .round-btn { width: 46px; height: 46px; }
+  .group-badge, .icon-box { width: 50px; height: 50px; border-radius: 15px; }
+}
+
+/* ---------- v10: রেজিস্ট্রেশন বাছাই কার্ড + অ্যাকাউন্ট ---------- */
+.reg-question { font-weight: 700; font-size: 17px; color: var(--navy); margin: 4px 0 12px; }
+.reg-type-cards { display: flex; flex-direction: column; gap: 10px; }
+.reg-type-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; text-align: left; background: #fff; border: 1.5px solid var(--border);
+  border-radius: 18px; padding: 16px; cursor: pointer; font-family: inherit;
+  box-shadow: 0 2px 10px rgba(10, 37, 64, .06);
+  transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.reg-type-card:active { transform: scale(.97); }
+.reg-type-card:hover { border-color: var(--red); box-shadow: 0 4px 16px rgba(225, 29, 72, .14); }
+.reg-type-ico { font-size: 30px; line-height: 1.2; }
+.reg-type-card b { font-size: 17px; color: var(--navy); }
+.reg-type-card small { font-size: 13px; color: var(--muted); }
+.account-logged p { margin: 6px 0; }
+#account-body .btn { margin-top: 8px; }
+#account-body .muted.small { margin-top: 10px; }

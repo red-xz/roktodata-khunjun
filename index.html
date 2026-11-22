@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Blood Donor Finder — Find blood donors, hospitals and doctors near you</title>
+<meta name="description" content="Find blood donors, hospitals and doctors near you — কাছের রক্তদাতা, হাসপাতাল ও ডাক্তার খুঁজুন">
+<meta property="og:title" content="Blood Donor Finder">
+<meta property="og:description" content="Find blood donors, hospitals and doctors near you — কাছের রক্তদাতা, হাসপাতাল ও ডাক্তার খুঁজুন">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://roktodata-khunjun.web.app/">
+<meta name="theme-color" content="#E11D48">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Blood Donor Finder">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <div id="config-warning" class="warning hidden">⚠️ <span data-i18n="config_warning"></span></div>
+  <div id="toast" class="toast hidden"></div>
+  <datalist id="district-list"></datalist>
+
+  <!-- ============ হোম ট্যাব ============ -->
+  <section id="tab-home" class="tab-panel active">
+    <header class="hero">
+      <div class="hero-top">
+        <button class="loc-btn" id="btn-home-geo" type="button">
+          <span class="loc-label" data-i18n="home_location">আপনার অবস্থান</span>
+          <span class="loc-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span id="home-location-label" data-i18n="home_set_location">অবস্থান দিন</span></span>
+        </button>
+        <button class="bell-btn" id="btn-bell" type="button" aria-label="জরুরি অনুরোধ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-dot hidden" id="bell-dot"></span></button>
+      </div>
+      <h1 class="hero-title"><span data-i18n="home_headline_a">জীবন বাঁচাতে</span><br><span data-i18n="home_headline_b">রক্ত খুঁজুন</span></h1>
+    </header>
+
+    <div class="card search-hero-card">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="input-universal" type="text" data-i18n-ph="home_search_ph" placeholder="রক্ত, ডাক্তার বা হাসপাতাল খুঁজুন">
+        <button id="btn-search-universal" type="button" aria-label="খুঁজুন">→</button>
+      </div>
+      <div class="chip-row" id="uni-chips">
+        <button type="button" data-q="B+">B+</button>
+        <button type="button" data-q="O+">O+</button>
+        <button type="button" data-q="ডাক্তার">ডাক্তার</button>
+        <button type="button" data-q="হাসপাতাল">হাসপাতাল</button>
+        <button type="button" data-q="কুষ্টিয়া ডাক্তার">কুষ্টিয়া ডাক্তার</button>
+      </div>
+      <h3 class="group-heading" data-i18n="home_choose_group">রক্তের গ্রুপ বেছে নিন</h3>
+      <div class="group-tiles" id="group-tiles"></div>
+      <button class="btn navy big" id="btn-find-donors" type="button"><span id="find-donors-label" data-i18n="find_donors_suffix">রক্তদাতা খুঁজুন</span></button>
+    </div>
+
+    <div class="shortcuts">
+      <button class="shortcut" id="shortcut-doctors" type="button">
+        <span class="shortcut-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg></span>
+        <span class="shortcut-text"><b data-i18n="shortcut_doctors">ডাক্তার</b><small id="shortcut-doctors-count">—</small></span>
+      </button>
+      <button class="shortcut" id="shortcut-hospitals" type="button">
+        <span class="shortcut-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M12 10v4"/><path d="M10 12h4"/></svg></span>
+        <span class="shortcut-text"><b data-i18n="shortcut_hospitals">হাসপাতাল</b><small id="shortcut-hospitals-sub">—</small></span>
+      </button>
+    </div>
+
+    <div id="urgent-card"></div>
+  </section>
+
+  <!-- ============ রক্ত ট্যাব ============ -->
+  <section id="tab-donors" class="tab-panel">
+    <h1 class="page-title" id="donors-title" data-i18n="nav_donors">রক্ত</h1>
+    <p class="page-sub" id="donors-subtitle"></p>
+    <div class="filter-pills" id="donor-filter-pills">
+      <button type="button" data-filter="near" class="active" data-i18n="filter_near">কাছের আগে</button>
+      <button type="button" data-filter="all" data-i18n="filter_all">সবাই</button>
+      <button type="button" data-filter="ready" data-i18n="filter_ready">সক্রিয়</button>
+    </div>
+    <div class="card search-mini">
+      <div class="group-tiles small" id="group-tiles-donors"></div>
+      <button class="btn secondary" id="btn-geo">📍 <span data-i18n="use_location">আমার লোকেশন ব্যবহার করুন</span></button>
+      <p class="or"><span data-i18n="or_label">অথবা</span></p>
+      <input id="input-district" type="text" list="district-list" data-i18n-ph="district_ph" placeholder="জেলা / শহরের নাম লিখুন">
+      <label data-i18n="radius_label">খোঁজার দূরত্ব</label>
+      <div class="radius-pills" id="radius-pills">
+        <button data-radius="5">5 km</button>
+        <button data-radius="10" class="active">10 km</button>
+        <button data-radius="20">20 km</button>
+        <button data-radius="50">50 km</button>
+      </div>
+      <button class="btn big" id="btn-search-donors" data-i18n="search_btn">খুঁজুন</button>
+      <p class="muted small" id="search-status"></p>
+      <button class="btn link" id="compat-link-btn" type="button" data-i18n="compat_link">কার রক্ত কাকে দেওয়া যায়</button>
+    </div>
+    <div id="donor-results"></div>
+  </section>
+
+  <!-- ============ ডাক্তার ট্যাব ============ -->
+  <section id="tab-doctors" class="tab-panel">
+    <h1 class="page-title" data-i18n="doctors_title">ডাক্তার খুঁজুন</h1>
+    <p class="page-sub" id="doctors-subtitle"></p>
+    <div class="filter-pills" id="specialty-pills"></div>
+    <div class="card search-mini">
+      <button class="btn secondary" id="btn-geo-d">📍 <span data-i18n="use_location">আমার লোকেশন ব্যবহার করুন</span></button>
+      <p class="or"><span data-i18n="or_label">অথবা</span></p>
+      <input id="input-district-d" type="text" list="district-list" data-i18n-ph="district_ph" placeholder="জেলা / শহরের নাম লিখুন">
+      <button class="btn big" id="btn-search-doctors" data-i18n="search_btn">খুঁজুন</button>
+      <p class="muted small" id="search-status-d"></p>
+    </div>
+    <div id="doctor-results"></div>
+  </section>
+
+  <!-- ============ হাসপাতাল ট্যাব ============ -->
+  <section id="tab-hospitals" class="tab-panel">
+    <h1 class="page-title" data-i18n="hospitals_title">কাছের হাসপাতাল</h1>
+    <p class="page-sub" id="hospitals-subtitle"></p>
+    <div id="map-wrap"><div id="map"></div></div>
+    <div class="card search-mini">
+      <button class="btn secondary" id="btn-geo-h">📍 <span data-i18n="use_location">আমার লোকেশন ব্যবহার করুন</span></button>
+      <p class="or"><span data-i18n="or_label">অথবা</span></p>
+      <input id="input-district-h" type="text" list="district-list" data-i18n-ph="district_ph" placeholder="জেলা / শহরের নাম লিখুন">
+      <button class="btn big" id="btn-search-hospitals" data-i18n="search_btn">খুঁজুন</button>
+      <p class="muted small" id="search-status-h"></p>
+    </div>
+    <div id="hospital-results"></div>
+  </section>
+
+  <!-- ============ সবকিছু খোঁজার ফলাফল (হোমের সার্চ থেকে) ============ -->
+  <section id="view-search" class="hidden">
+    <button class="btn link back-btn" id="search-back-btn" type="button" data-i18n="back_btn">← ফিরে যান</button>
+    <h2 data-i18n="uni_search_title">সবকিছু খুঁজুন</h2>
+    <p class="muted small" id="uni-status"></p>
+    <div id="uni-results"></div>
+  </section>
+
+  <!-- ============ প্রোফাইল ট্যাব ============ -->
+  <section id="tab-profile" class="tab-panel">
+    <div class="profile-header">
+      <h1 class="page-title" data-i18n="tab_profile">প্রোফাইল</h1>
+      <label class="lang-corner"><span aria-hidden="true">🌐</span><select id="lang-select" aria-label="ভাষা"></select></label>
+    </div>
+
+    <div class="card" id="account-card">
+      <h2 data-i18n="account_title">লগইন / অ্যাকাউন্ট</h2>
+      <div id="account-body"></div>
+    </div>
+
+    <div class="card hidden" id="register-card">
+      <h2 data-i18n="register_title">রেজিস্টার করুন</h2>
+      <div id="reg-types" class="hidden">
+        <p class="reg-question" data-i18n="reg_who_are_you">আপনি কে?</p>
+        <div class="reg-type-cards">
+          <button type="button" class="reg-type-card" data-regtype="donor">
+            <span class="reg-type-ico">🩸</span>
+            <b data-i18n="reg_type_donor">আমি রক্তদাতা</b>
+            <small data-i18n="reg_type_donor_d">রক্ত দিয়ে জীবন বাঁচান</small>
+          </button>
+          <button type="button" class="reg-type-card" data-regtype="doctor">
+            <span class="reg-type-ico">🩺</span>
+            <b data-i18n="reg_type_doctor">আমি ডাক্তার</b>
+            <small data-i18n="reg_type_doctor_d">রোগীরা আপনাকে খুঁজে পাবে</small>
+          </button>
+          <button type="button" class="reg-type-card" data-regtype="hospital">
+            <span class="reg-type-ico">🏥</span>
+            <b data-i18n="reg_type_hospital">আমি হাসপাতালের কেউ</b>
+            <small data-i18n="reg_type_hospital_d">হাসপাতালের তথ্য যোগ করুন</small>
+          </button>
+        </div>
+        <button class="btn link" id="btn-reg-types-back" type="button" data-i18n="back_btn">← ফিরে যান</button>
+      </div>
+      <div id="reg-form-wrap" class="hidden">
+        <button class="btn link" id="btn-reg-form-back" type="button" data-i18n="back_btn">← ফিরে যান</button>
+        <div id="reg-form-donor" class="hidden">
+      <h2 data-i18n="reg_donor">ডোনার হিসেবে রেজিস্টার করুন</h2>
+      <form id="form-donor" novalidate>
+        <label for="d-name" data-i18n="f_name">নাম</label>
+        <input id="d-name" type="text" required>
+        <label for="d-phone" data-i18n="f_phone">ফোন নম্বর</label>
+        <input id="d-phone" type="tel" required placeholder="01XXXXXXXXX">
+        <label for="d-address" data-i18n="f_address">ঠিকানা</label>
+        <input id="d-address" type="text" required>
+        <button class="btn secondary" id="btn-geo-donor" type="button">📍 <span data-i18n="live_location_btn">লাইভ লোকেশন দিন</span></button>
+        <p class="muted small" id="geo-status-donor"></p>
+        <p class="muted small" data-i18n="live_location_hint">লাইভ লোকেশন দিলে কাছের মানুষ আপনাকে সহজে খুঁজে পাবে।</p>
+        <label for="d-age" data-i18n="f_age">বয়স</label>
+        <input id="d-age" type="number" min="18" max="70" required>
+        <label for="d-gender" data-i18n="f_gender">জেন্ডার</label>
+        <select id="d-gender" required>
+          <option value="male" data-i18n="gender_m">পুরুষ</option>
+          <option value="female" data-i18n="gender_f">মহিলা</option>
+          <option value="other" data-i18n="gender_o">অন্যান্য</option>
+        </select>
+        <label for="d-group" data-i18n="f_group">রক্তের গ্রুপ</label>
+        <select id="d-group" required></select>
+        <label for="d-profession" data-i18n="f_profession">পেশা</label>
+        <input id="d-profession" type="text" required>
+        <label for="d-last" data-i18n="f_last_donation">সর্বশেষ রক্তদানের তারিখ (যদি থাকে)</label>
+        <input id="d-last" type="date">
+        <label for="d-photo" data-i18n="f_photo_optional">ছবি (ঐচ্ছিক)</label>
+        <input id="d-photo" type="file" accept="image/*">
+        <img id="d-photo-preview" class="photo-preview hidden" alt="">
+        <label class="consent">
+          <input id="d-consent" type="checkbox" required>
+          <span data-i18n="consent_donor">আমি স্বেচ্ছায় ফ্রিতে রক্তদান করতে আগ্রহী</span>
+        </label>
+        <label class="consent">
+          <input id="d-terms" type="checkbox" required>
+          <span><span data-i18n="terms_accept">আমি ব্যবহারের শর্তাবলী পড়েছি ও মেনে নিচ্ছি</span> (<a href="terms.html" data-i18n="terms_read">শর্তাবলী পড়ুন</a>)</span>
+        </label>
+        <button class="btn big" type="submit" data-i18n="submit_btn">রেজিস্টার করুন</button>
+      </form>
+        </div>
+        <div id="reg-form-hospital" class="hidden">
+      <h2 data-i18n="reg_hospital">হাসপাতাল রেজিস্টার করুন</h2>
+      <form id="form-hospital" novalidate>
+        <label for="h-name" data-i18n="f_name">নাম</label>
+        <input id="h-name" type="text" required>
+        <label for="h-phone" data-i18n="f_phone">ফোন নম্বর</label>
+        <input id="h-phone" type="tel" required>
+        <label for="h-address" data-i18n="f_address">ঠিকানা</label>
+        <input id="h-address" type="text" required>
+        <button class="btn secondary" id="btn-geo-hosp" type="button">📍 <span data-i18n="live_location_btn">লাইভ লোকেশন দিন</span></button>
+        <p class="muted small" id="geo-status-hosp"></p>
+        <p class="muted small" data-i18n="live_location_hint">লাইভ লোকেশন দিলে কাছের মানুষ আপনাকে সহজে খুঁজে পাবে।</p>
+        <label for="h-facilities" data-i18n="f_facilities">সুযোগ-সুবিধা ও সেবা</label>
+        <input id="h-facilities" type="text" required placeholder="ICU, Emergency, Cardiology…">
+        <label for="h-doctors" data-i18n="f_doctors_here">এখানে যেসব ডাক্তার বসেন</label>
+        <input id="h-doctors" type="text">
+        <label for="h-photo" data-i18n="f_photo">ছবি</label>
+        <input id="h-photo" type="file" accept="image/*" required>
+        <img id="h-photo-preview" class="photo-preview hidden" alt="">
+        <label for="h-licence" data-i18n="f_licence">অনুমোদন / লাইসেন্সের প্রমাণ (ছবি)</label>
+        <input id="h-licence" type="file" accept="image/*" required>
+        <p class="muted small" data-i18n="f_licence_hint">লাইসেন্সের কাগজের ছবি দিন — শুধু আপনিই দেখতে পারবেন, পাবলিক শুধু "লাইসেন্স দেওয়া হয়েছে" দেখবে।</p>
+        <label class="consent">
+          <input id="h-consent" type="checkbox" required>
+          <span data-i18n="consent_truth">আমার সকল তথ্য সত্যি</span>
+        </label>
+        <label class="consent">
+          <input id="h-terms" type="checkbox" required>
+          <span><span data-i18n="terms_accept">আমি ব্যবহারের শর্তাবলী পড়েছি ও মেনে নিচ্ছি</span> (<a href="terms.html" data-i18n="terms_read">শর্তাবলী পড়ুন</a>)</span>
+        </label>
+        <button class="btn big" type="submit" data-i18n="submit_btn">রেজিস্টার করুন</button>
+      </form>
+        </div>
+        <div id="reg-form-doctor" class="hidden">
+      <h2 data-i18n="reg_doctor">ডাক্তার হিসেবে রেজিস্টার করুন</h2>
+      <form id="form-doctor" novalidate>
+        <label for="dr-name" data-i18n="f_name">নাম</label>
+        <input id="dr-name" type="text" required>
+        <label for="dr-phone" data-i18n="f_phone">ফোন নম্বর</label>
+        <input id="dr-phone" type="tel" required>
+        <label for="dr-degree" data-i18n="f_degree">ডিগ্রি / যোগ্যতা</label>
+        <input id="dr-degree" type="text" required placeholder="MBBS, FCPS…">
+        <label for="dr-specialty" data-i18n="f_specialty">বিশেষজ্ঞতা</label>
+        <input id="dr-specialty" type="text" required placeholder="Cardiology">
+        <label for="dr-workplace" data-i18n="f_workplace">বর্তমান কর্মস্থল</label>
+        <input id="dr-workplace" type="text" required>
+        <label for="dr-address" data-i18n="f_address">ঠিকানা</label>
+        <input id="dr-address" type="text" required>
+        <button class="btn secondary" id="btn-geo-dr" type="button">📍 <span data-i18n="live_location_btn">লাইভ লোকেশন দিন</span></button>
+        <p class="muted small" id="geo-status-dr"></p>
+        <p class="muted small" data-i18n="live_location_hint">লাইভ লোকেশন দিলে কাছের মানুষ আপনাকে সহজে খুঁজে পাবে।</p>
+        <label for="dr-govt" data-i18n="f_govt">সরকারি প্রতিষ্ঠান কি না</label>
+        <select id="dr-govt" required>
+          <option value="private" data-i18n="govt_no">না, বেসরকারি</option>
+          <option value="government" data-i18n="govt_yes">হ্যাঁ, সরকারি</option>
+        </select>
+        <label for="dr-regno" data-i18n="f_regno_optional">মেডিকেল রেজিস্ট্রেশন নম্বর (যদি থাকে)</label>
+        <input id="dr-regno" type="text">
+        <label for="dr-photo" data-i18n="f_photo">ছবি</label>
+        <input id="dr-photo" type="file" accept="image/*" required>
+        <img id="dr-photo-preview" class="photo-preview hidden" alt="">
+        <label class="consent">
+          <input id="dr-consent" type="checkbox" required>
+          <span data-i18n="consent_truth">আমার সকল তথ্য সত্যি</span>
+        </label>
+        <label class="consent">
+          <input id="dr-terms" type="checkbox" required>
+          <span><span data-i18n="terms_accept">আমি ব্যবহারের শর্তাবলী পড়েছি ও মেনে নিচ্ছি</span> (<a href="terms.html" data-i18n="terms_read">শর্তাবলী পড়ুন</a>)</span>
+        </label>
+        <button class="btn big" type="submit" data-i18n="submit_btn">রেজিস্টার করুন</button>
+      </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="my-profile-card">
+      <h2 data-i18n="my_profile">আমার প্রোফাইল</h2>
+      <div id="my-profile"></div>
+    </div>
+
+    <div class="card" id="my-listings-card">
+      <h2 data-i18n="my_listings">আমার তালিকা</h2>
+      <div id="my-listings"></div>
+    </div>
+
+    <div class="card" id="settings-card">
+      <h2 data-i18n="settings_title">সেটিংস</h2>
+      <label for="country-select" data-i18n="country_label">দেশ</label>
+      <select id="country-select"></select>
+      <h4 data-i18n="textsize_label">লেখার সাইজ</h4>
+      <div class="seg-row" id="textsize-row">
+        <button type="button" data-textsize="default">A</button>
+        <button type="button" data-textsize="large">A</button>
+        <button type="button" data-textsize="xlarge">A</button>
+      </div>
+      <div class="appear-row">
+        <span data-i18n="sound_label">ক্লিক সাউন্ড</span>
+        <button type="button" class="switch on" id="btn-sound" role="switch" aria-checked="true"><span class="knob"></span></button>
+      </div>
+      <div class="appear-row hidden" id="logout-row">
+        <span id="settings-account-phone"></span>
+        <button type="button" class="btn small secondary" id="btn-logout-settings" data-i18n="logout_btn">লগআউট</button>
+      </div>
+    </div>
+
+    <div class="card" id="compat-card">
+      <h2 data-i18n="compat_title">রক্তের গ্রুপ সামঞ্জস্য</h2>
+      <p class="muted" data-i18n="compat_subtitle">কার রক্ত কাকে দেওয়া যায়</p>
+      <div id="compat-chart"></div>
+    </div>
+
+    <div class="card" id="orgs-card">
+      <h2 data-i18n="orgs_title">ব্লাড ব্যাংক ও সংগঠন</h2>
+      <div id="org-list"></div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="how_title">কীভাবে কাজ করে</h2>
+      <ol class="how">
+        <li><b data-i18n="how_1_t">গ্রুপ বাছুন</b><br><span data-i18n="how_1_d">যে গ্রুপের রক্ত দরকার সেটা বাছুন।</span></li>
+        <li><b data-i18n="how_2_t">কাছের ডোনার দেখুন</b><br><span data-i18n="how_2_d">আপনার কাছের ডোনাররাই শুধু দেখাবে, সবচেয়ে কাছেরটা আগে।</span></li>
+        <li><b data-i18n="how_3_t">কল করুন</b><br><span data-i18n="how_3_d">এক চাপে ডোনারকে কল করুন।</span></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="elig_title">কারা রক্ত দিতে পারবেন</h2>
+      <ul class="checklist">
+        <li data-i18n="elig_age">বয়স ১৮ থেকে ৭০ বছর</li>
+        <li data-i18n="elig_rest">শেষ রক্তদানের পর কমপক্ষে ৯০ দিন পার হয়েছে</li>
+        <li data-i18n="elig_note">সুস্থ থাকতে হবে; জ্বর, অ্যান্টিবায়োটিক বা বড় অসুখ থাকলে দেবেন না।</li>
+      </ul>
+    </div>
+
+
+    <div class="card">
+      <h2 data-i18n="remove_title">পাবলিক তালিকা থেকে সরান</h2>
+      <p class="muted" data-i18n="remove_hint">তালিকায় থাকা আপনার ফোন নম্বর লিখুন — মিলে গেলে তথ্য সরিয়ে দেওয়া হবে।</p>
+      <label for="rm-phone" data-i18n="f_phone">ফোন নম্বর</label>
+      <input id="rm-phone" type="tel" placeholder="01XXXXXXXXX">
+      <button class="btn secondary" id="btn-remove-public" data-i18n="remove_listing">আমার তথ্য সরান</button>
+    </div>
+
+    <p class="emergency">🚨 <span data-i18n="emergency_note">জরুরি অবস্থায় সরাসরি নিকটস্থ হাসপাতালে যান বা জরুরি নম্বরে কল করুন।</span></p>
+    <p class="disclaimer" data-i18n="medical_disclaimer">এই অ্যাপ চিকিৎসা পরামর্শ দেয় না — রক্তদানের যোগ্যতা চিকিৎসক যাচাই করবেন।</p>
+    <footer class="footer">
+      <a href="privacy.html" data-i18n="privacy_policy">গোপনীয়তা নীতি</a> •
+      <a href="terms.html" data-i18n="terms_of_use">ব্যবহারের শর্তাবলী</a><br>
+      © 2026 SOHEL. ALL RIGHTS RESERVED.
+    </footer>
+  </section>
+
+  <!-- রিভিউ প্যানেল -->
+  <div id="review-panel" class="modal hidden">
+    <div class="modal-box">
+      <h2 id="review-title" data-i18n="add_review">রিভিউ দিন</h2>
+      <div id="review-list"></div>
+      <form id="form-review" novalidate>
+        <label for="r-name" data-i18n="your_name">আপনার নাম</label>
+        <input id="r-name" type="text" required>
+        <label data-i18n="rating_label">রেটিং</label>
+        <div class="stars" id="review-stars">
+          <button type="button" data-star="1">☆</button>
+          <button type="button" data-star="2">☆</button>
+          <button type="button" data-star="3">☆</button>
+          <button type="button" data-star="4">☆</button>
+          <button type="button" data-star="5">☆</button>
+        </div>
+        <label for="r-text" data-i18n="review_text">আপনার অভিজ্ঞতা লিখুন</label>
+        <input id="r-text" type="text">
+        <button class="btn big" type="submit" data-i18n="submit_review">রিভিউ জমা দিন</button>
+        <button class="btn link" type="button" id="btn-close-review" data-i18n="cancel_btn">বাতিল</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- অ্যাপয়েন্টমেন্ট প্যানেল: ডাক্তারের কর্মস্থল হাসপাতালের নাম্বার -->
+  <div id="appointment-panel" class="modal hidden">
+    <div class="modal-box">
+      <h2 data-i18n="appointment_title">অ্যাপয়েন্টমেন্ট নিন</h2>
+      <div id="appt-body"></div>
+      <button class="btn link" type="button" id="btn-close-appt" data-i18n="cancel_btn">বাতিল</button>
+    </div>
+  </div>
+
+  <!-- জরুরি রক্তের অনুরোধের ফর্ম -->
+  <div id="request-panel" class="modal hidden">
+    <div class="modal-box">
+      <h2 data-i18n="request_form_title">জরুরি রক্তের অনুরোধ দিন</h2>
+      <form id="form-request" novalidate>
+        <label data-i18n="f_group">রক্তের গ্রুপ</label>
+        <div class="group-tiles small" id="rq-group-tiles"></div>
+        <label for="rq-hospital" data-i18n="request_hospital">কোন হাসপাতালে লাগবে</label>
+        <input id="rq-hospital" type="text" required>
+        <label for="rq-district" data-i18n="request_district">জেলা</label>
+        <input id="rq-district" type="text" list="district-list" required>
+        <label for="rq-area" data-i18n="request_area">এলাকা (ঐচ্ছিক)</label>
+        <input id="rq-area" type="text">
+        <label for="rq-phone" data-i18n="f_phone">ফোন নম্বর</label>
+        <input id="rq-phone" type="tel" required placeholder="01XXXXXXXXX">
+        <label for="rq-patient" data-i18n="request_patient">রোগীর নাম (ঐচ্ছিক)</label>
+        <input id="rq-patient" type="text">
+        <label for="rq-needed" data-i18n="request_needed_by">কবে লাগবে (ঐচ্ছিক)</label>
+        <input id="rq-needed" type="date">
+        <label for="rq-notes" data-i18n="request_notes">বাড়তি তথ্য (ঐচ্ছিক)</label>
+        <input id="rq-notes" type="text">
+        <label class="consent">
+          <input id="rq-consent" type="checkbox" required>
+          <span data-i18n="consent_truth">আমার সকল তথ্য সত্যি</span>
+        </label>
+        <label class="consent">
+          <input id="rq-terms" type="checkbox" required>
+          <span><span data-i18n="terms_accept">আমি ব্যবহারের শর্তাবলী পড়েছি ও মেনে নিচ্ছি</span> (<a href="terms.html" data-i18n="terms_read">শর্তাবলী পড়ুন</a>)</span>
+        </label>
+        <button class="btn big" type="submit" data-i18n="request_submit">অনুরোধ পাঠান</button>
+        <button class="btn link" type="button" id="btn-close-request" data-i18n="cancel_btn">বাতিল</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- সব জরুরি অনুরোধের তালিকা (ঘণ্টা আইকন থেকে) -->
+  <div id="requests-panel" class="modal hidden">
+    <div class="modal-box">
+      <h2 data-i18n="requests_title">জরুরি রক্তের অনুরোধ</h2>
+      <div id="requests-list"></div>
+      <button class="btn big" type="button" id="btn-new-request-2" data-i18n="urgent_cta_btn">অনুরোধ দিন</button>
+      <button class="btn link" type="button" id="btn-close-requests" data-i18n="cancel_btn">বাতিল</button>
+    </div>
+  </div>
+
+  <!-- ফোন + পাসওয়ার্ড লগইন / অ্যাকাউন্ট (v10 — Google নেই, SMS নেই) -->
+  <div id="auth-panel" class="modal hidden">
+    <div class="modal-box">
+      <h2 id="auth-title">লগইন করুন</h2>
+      <form id="form-auth" novalidate>
+        <label for="auth-phone" data-i18n="f_phone">ফোন নম্বর</label>
+        <input id="auth-phone" type="tel" required placeholder="01XXXXXXXXX" autocomplete="tel">
+        <label for="auth-password" data-i18n="auth_password">পাসওয়ার্ড</label>
+        <input id="auth-password" type="password" required data-i18n-ph="auth_password_ph" placeholder="কমপক্ষে ৬ অক্ষর" autocomplete="current-password">
+        <div id="auth-confirm-wrap" class="hidden">
+          <label for="auth-confirm" data-i18n="auth_confirm_password">পাসওয়ার্ড আবার লিখুন</label>
+          <input id="auth-confirm" type="password" autocomplete="new-password">
+        </div>
+        <p class="muted small hidden" id="auth-hint" data-i18n="account_create_hint">আগে রেজিস্টার করে থাকলে এখান থেকে অ্যাকাউন্ট খুলুন — আপনার পুরনো তথ্য থেকে যাবে।</p>
+        <button class="btn big" type="submit" id="auth-submit">লগইন</button>
+        <button class="btn link" type="button" id="btn-close-auth" data-i18n="cancel_btn">বাতিল</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- নিচের ভাসমান নেভিগেশন: হোম / রক্ত / ডাক্তার / হাসপাতাল / প্রোফাইল -->
+<nav id="bottom-nav">
+  <button class="nav-item active" data-nav="home" type="button"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></span><span data-i18n="nav_home">হোম</span></button>
+  <button class="nav-item" data-nav="donors" type="button"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg></span><span data-i18n="nav_donors">রক্ত</span></button>
+  <button class="nav-item" data-nav="doctors" type="button"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg></span><span data-i18n="nav_doctors">ডাক্তার</span></button>
+  <button class="nav-item" data-nav="hospitals" type="button"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M12 10v4"/><path d="M10 12h4"/></svg></span><span data-i18n="nav_hospitals">হাসপাতাল</span></button>
+  <button class="nav-item" data-nav="profile" type="button"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg></span><span data-i18n="nav_profile">প্রোফাইল</span></button>
+</nav>
+<script type="module" src="app.js"></script>
+</body>
+</html>

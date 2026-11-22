@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">রক্তদাতা খুঁজুন</string>
+    <string name="title_activity_main">রক্তদাতা খুঁজুন</string>
+    <string name="package_name">com.sohel.roktodata</string>
+    <string name="custom_url_scheme">com.sohel.roktodata</string>
+</resources>

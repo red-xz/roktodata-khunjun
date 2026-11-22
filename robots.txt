@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://roktodata-khunjun.web.app/sitemap.xml
