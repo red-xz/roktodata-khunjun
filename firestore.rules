@@ -116,5 +116,21 @@ service cloud.firestore {
         && request.resource.data.phone is string;
       allow delete: if false; // একবার সরানো হলে আর ফেরত নেই
     }
+
+    // ---------- ভিজিট কাউন্টার (v12) ----------
+    // অ্যাপ খুললেই visits সংখ্যা ১ বাড়ে — নাম/ফোন/লোকেশন
+    // কিছুই লেখা হয় না, শুধু সংখ্যা। ডকুমেন্ট: stats/{তারিখ}
+    // (দিনের ভিজিট) ও stats/total (সব মিলিয়ে)। অ্যাডমিন
+    // প্যানেল এই সংখ্যাই পড়ে দেখাবে।
+    match /stats/{statId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['visits'])
+        && request.resource.data.visits is int;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visits'])
+        && request.resource.data.visits is int;
+      allow delete: if false;
+    }
   }
 }

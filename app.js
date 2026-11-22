@@ -233,6 +233,29 @@ async function initFirebase() {
   }
 }
 
+// ---------- ভিজিট কাউন্টার (v12) ----------
+// অ্যাপ খুললেই একটি ভিজিট গোনা হয় — নাম/ফোন/লোকেশন কিছুই
+// রেকর্ড হয় না, শুধু সংখ্যা বাড়ে। একই সেশনে (একই ট্যাব খোলা
+// থাকলে) রিফ্রেশ করলে আবার গোনা হয় না। সংখ্যাটা Firestore-এ
+// stats/{তারিখ} ও stats/total ডকুমেন্টে থাকে — অ্যাডমিন
+// প্যানেল সেখান থেকেই পড়ে দেখাবে।
+async function recordVisit() {
+  if (!db || !user) return;
+  try {
+    if (sessionStorage.getItem('rb_visit_counted')) return;
+    sessionStorage.setItem('rb_visit_counted', '1');
+    const d = new Date();
+    const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    await Promise.all([
+      fb.setDoc(fb.doc(db, 'stats', day), { visits: fb.increment(1) }, { merge: true }),
+      fb.setDoc(fb.doc(db, 'stats', 'total'), { visits: fb.increment(1) }, { merge: true })
+    ]);
+  } catch (e) {
+    // কাউন্টার ব্যর্থ হলে অ্যাপ থামবে না — শুধু লগ হবে
+    console.warn('visit counter failed', e);
+  }
+}
+
 async function loadFirestoreData() {
   if (!db) return;
   try {
@@ -2154,6 +2177,7 @@ async function init() {
   }
   try {
     await initFirebase();
+    recordVisit(); // ভিজিট গোনা (ব্যাকগ্রাউন্ডে — UI আটকাবে না)
     await loadFirestoreData();
     renderStats(); renderGroupTiles(); renderSpecialties(); renderAccount(); renderMyListings();
     renderRequestGroupTiles(); renderHome();
