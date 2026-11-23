@@ -1,9 +1,73 @@
-# রক্তদাতা খুঁজুন — Find a Blood Donor (standalone web app)
+# Blood Donor Finder
 
-কাছের রক্তদাতা, হাসপাতাল ও ডাক্তার খোঁজার অ্যাপ — Firebase Hosting-এ
-ডিপ্লয় করা যাবে, আর Capacitor দিয়ে Android APK বানানো যাবে।
-(Muse artifact থেকে ফিচার-স্পেক নিয়ে নতুন করে লেখা; artifact-এর
-সোর্স পড়া হয়নি।)
+<p align="center">
+  <img src="assets/screenshot-home-390.jpg" alt="Blood Donor Finder home screen" width="300">
+</p>
+
+**Find a blood donor near you — in minutes, not hours.**
+
+Live now: **[roktodata-khunjun.web.app](https://roktodata-khunjun.web.app)** · Android APK available · 12 languages
+
+Seeded with 13 hospitals, 9 doctors and 31 public donors across 22 districts of Bangladesh — search by blood group, nearest first, exact group before compatible. No account needed to search; donors register in minutes.
+
+## Why this exists
+
+In an emergency, people waste hours calling around for blood. This app answers
+one question fast: **who near me can donate this blood group right now?**
+Donors set their last donation date, so the app only shows people who are
+actually ready (90-day rule).
+
+## Features
+
+- **Nearby-only donor search** — 10 km default, widen to 5/20/50 km; nearest
+  first; one-tap call; phone numbers masked on screen (real number dialed)
+- **Emergency blood requests** — post an urgent request, donors respond in-app
+- **Hospitals & doctors** — nearby hospitals on a map, doctor finder with
+  appointment booking (hospital number revealed on tap)
+- **Donor readiness badge** — ready / resting based on last donation date
+- **Registration** — donors, doctors (degree, specialty, reg. no., photo
+  required) and hospitals (licence proof required, owner-only)
+- **12 languages** — Bangla + English fully, 10 more with core translations
+- **Reports & safety** — report a listing (auto-hidden at 3+ reports), medical
+  disclaimer, privacy + terms pages
+- **PWA + Android** — installable from the browser; Capacitor Android APK
+
+## Quickstart
+
+```bash
+git clone https://github.com/red-xz/roktodata-khunjun.git
+cd roktodata-khunjun
+python3 -m http.server 8000
+# open http://localhost:8000 — search works immediately with the seeded public data
+```
+
+To run your own copy with live registrations, create a free Firebase project
+(Spark plan) and fill in `firebase-config.js` — see the "Firebase setup
+checklist" in the Bengali details below.
+Deploy with `firebase deploy --only hosting,firestore:rules`.
+
+## Tech
+
+Plain HTML/CSS/JS — no build step, no framework. Firebase (Firestore +
+Anonymous Auth + Hosting) on the free Spark plan. Capacitor 7 for the
+Android app. Works on low-end phones and fits 320px screens.
+
+## Data & ethics
+
+- Only **self-published public-directory listings** are seeded (Roktobondhu,
+  ourbrs.org), source-linked and marked "Public listing / not yet verified".
+- No Facebook data — Facebook blood posts are mostly patients' families
+  asking for blood, not donors.
+- Donors can remove their own listing any time. No addresses or raw
+  coordinates are ever shown in search results.
+
+---
+
+If this helps someone find blood in time, star it ⭐ — it helps the next
+person find it too.
+
+
+## বাংলায় বিস্তারিত (Details in Bengali)
 
 ## ফিচার (সবগুলো আছে)
 
